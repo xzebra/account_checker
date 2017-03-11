@@ -1,23 +1,21 @@
 import time
 from datetime import datetime
 class sqlite:
-    headers        = ('Id','User','Password','Data', 'Status')
-    headersimport  = ('Id','User','Password','Data')
-    headersCheck   = ('Id','User','Password','Data','Status')
-    headersJobs    = ('Id','User','Running','Start Data')
-    headersAgents  = ('Id','User','Process')
-    createTables   = 'CREATE TABLE IF NOT EXISTS database_bot (id integer PRIMARY KEY AUTOINCREMENT, user text, datestamp text, password text, status text)'
-    selectAllBots  = 'SELECT id,user,password,datestamp,status FROM database_bot'
-    deleteforID     = 'DELETE FROM database_bot WHERE id= {}'
-    zeraids         = 'UPDATE SQLITE_SEQUENCE set seq=0 WHERE name="database_bot"'
-    delete_all      = 'DROP TABLE IF EXISTS database_bot'
-def DB_insert(con,db,user,password):
-    data_time = str(datetime.fromtimestamp(int(time.time())).strftime("%Y-%m-%d %H:%M:%S"))
-    db.execute('INSERT INTO database_bot (user,datestamp,password,status) VALUES(?,?,?,?)',(user,data_time,password, 'On'))
+    headers        = ('Id','Platform','User','Password','Data','Status')
+    headersimport  = ('Id','Platform','User','Password','Data')
+    headersCheck   = ('Id','Platform','User','Password','Data','Status')
+
+    createTables   = 'CREATE TABLE IF NOT EXISTS db_accs (id integer PRIMARY KEY AUTOINCREMENT, platform text, user text, password text, status text)'
+    selectAllBots  = 'SELECT id,platform,user,password,status FROM db_accs'
+    deleteforID     = 'DELETE FROM db_accs WHERE id= {}'
+    zeraids         = 'UPDATE SQLITE_SEQUENCE set seq=0 WHERE name="db_accs"'
+    delete_all      = 'DROP TABLE IF EXISTS db_accs'
+def DB_insert(con,db,user,password,status):
+    db.execute('INSERT INTO db_accs (user,datestamp,password,status) VALUES(?,?,?,?)',(user,password,status))
     con.commit()
 
 def lengthDB(db):
-    size = db.execute('SELECT * FROM database_bot')
+    size = db.execute('SELECT * FROM db_accs')
     return len(size.fetchall())
 
 def deleteID(con,db,id):
@@ -25,5 +23,5 @@ def deleteID(con,db,id):
     con.commit()
 
 def DB_updateStatus(con,db,id,statusUpdated):
-    db.execute('UPDATE database_bot SET status = ? WHERE id = ?', (statusUpdated,id))
+    db.execute('UPDATE db_accs SET status = ? WHERE id = ?', (statusUpdated,id))
     con.commit()
