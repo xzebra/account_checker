@@ -7,3 +7,5 @@ You can save a lot of time by testing them with request instead of trying to log
 ###Requirements:
 - tabulate
 - pysqlite
+- bs4
+- lxml
