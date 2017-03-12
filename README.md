@@ -1,6 +1,6 @@
 # account_checker
 
-###Tests:
+###Can test:
 - [x] Gmail
 - [ ] Hotmail
 - [ ] Yahoo
