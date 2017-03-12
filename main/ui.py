@@ -12,7 +12,7 @@ from os import system,path,getcwd
 from subprocess import check_output
 from re import search
 from tabulate import tabulate
-from main.handlers import color,funcSQL,SessionGoogle
+from main.handlers import color,funcSQL,Sessions
 from bs4 import BeautifulSoup
 
 class Console(cmd.Cmd):
@@ -106,10 +106,10 @@ class Console(cmd.Cmd):
                 for agent in self.settings['all'].items():
                     agent = list(agent[1])
                     if self.login(agent[1], agent[2]) == 1:
-                        funcSQL.DB_updateStatus(self.con, self.db, agent[0], 'On')
+                        funcSQL.DB_updateStatus(self.con, self.db, agent[0], color.setcolor('On', color='Green'))
                         self.listbotsprint += list([agent])
                     else:
-                        funcSQL.DB_updateStatus(self.con, self.db, agent[0], 'Off')
+                        funcSQL.DB_updateStatus(self.con, self.db, agent[0], color.setcolor('Off', color='Red'))
                 color.display_messages('Agents:', info=True, sublime=True)
                 print tabulate(self.listbotsprint, headers=funcSQL.sqlite.headersCheck)
                 color.linefeed()
@@ -141,15 +141,16 @@ class Console(cmd.Cmd):
         except: return
         if args.user and args.password:
             if "@gmail" in args.user:
-                session = SessionGoogle.SessionGoogle(args.user, args.password)
+                session = Sessions.SessionGoogle(args.user, args.password)
                 r = session.get("http://plus.google.com")
-                finder = r.text.find("Iniciar sesión")
+                finder = r.find(args.user)
                 if finder != -1:
-                    color.display_messages('Login error! Check your login data!', error=True)
-                else:
-                    color.display_messages('Insert Data: SQL statement will insert a new row', info=True)
-                    funcSQL.DB_insert(self.con, self.db, args.user, args.password)
+                    funcSQL.DB_insert(self.con, self.db, 'Gmail', args.user, args.password, color.setcolor('On', color='Green'))
                     color.display_messages('Account credentials added with success', sucess=True)
+                else:
+                    funcSQL.DB_insert(self.con, self.db, 'Gmail', args.user, args.password, color.setcolor('Off', color='Red'))
+                    color.display_messages('Login error! Account credentials added with success', error=True)
+                session.get("https://accounts.google.com/Logout")              
             elif "@hotmail" in args.user:
                 num = self.login_hotmail(args.user, args.password)
 
@@ -172,22 +173,25 @@ class Console(cmd.Cmd):
                     print('')
                     return None
                 self.ListBot = []
-                color.display_messages('All agents imported from file:', info=True,sublime=True)
+                color.display_messages('All accounts imported from file:', info=True,sublime=True)
                 for agent in self.all_bot_checked: self.ListBot += list([agent.split()])
+                print tabulate(self.ListBot, headers=["User","Password"])
                 color.linefeed()
                 choise = raw_input('{}{}[*]{} Do you want to import?(S/N):'.format(color.colors.BOLD, color.colors.BLUE,color.colors.ENDC,))
                 if choise.lower() == 's':
-                    color.display_messages('Importing agents...', info=True, sublime=True)
-                    for agent in self.all_bot_checked: 
-						num = self.login(agent.split()[0], agent.split()[1])
-						if num == 0:
-							color.display_messages('Login error! Connection error!\n', error=True)
-						elif num == 1:
-							color.display_messages('Login error! Check your login data!\n', error=True)
-						elif num == 2:
-							color.display_messages('Insert Data: SQL statement will insert a new row', info=True)
-							funcSQL.DB_insert(self.con, self.db, agent.split()[0],agent.split()[1])
-							color.display_messages('Account ' + agent.split()[0] + ' added with success\n', sucess=True)
+                    color.display_messages('Importing accounts...', info=True, sublime=True)
+                    for agent in self.all_bot_checked:
+                    	if "@gmail" in agent.split()[0]:
+	                        session = Sessions.SessionGoogle(agent.split()[0], agent.split()[1])
+	                        r = session.get("http://plus.google.com")
+	                        finder = r.find(agent.split()[0])
+	                        if finder != -1:
+	                        	funcSQL.DB_insert(self.con, self.db, 'Gmail', agent.split()[0], agent.split()[1], color.setcolor('On', color='Green'))
+	                        	color.display_messages('Account credentials added with success', sucess=True)
+	                        else:
+	                        	funcSQL.DB_insert(self.con, self.db, 'Gmail', agent.split()[0], agent.split()[1], color.setcolor('Off', color='Red'))
+	                        	color.display_messages('Login error! Account credentials added with success', error=True)
+	                        session.get("https://accounts.google.com/Logout")  
             else:
                 color.display_messages('File could not be found', error=True)
         else:
@@ -210,7 +214,7 @@ class Console(cmd.Cmd):
             color.display_messages('Found ID:', sublime=True, info=True)
             color.display_messages('Search query for finding a particular id', info=True)
             color.display_messages('Section DELETE FROM statement.', info=True)
-            color.display_messages('ID:{} User:{} Password:{})'.format(items[0], items[1], items[2]), info=True)
+            color.display_messages('ID:{} Platform:{} User:{})'.format(items[0], items[1], items[2]), info=True)
             funcSQL.deleteID(self.con, self.db, args.id)
             if funcSQL.lengthDB(self.db) < 1:
                 self.db.execute(funcSQL.sqlite.zeraids)
