@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 import cmd
 import shlex
@@ -6,11 +7,13 @@ import requests
 from lxml import html
 import time
 import random
+import platform
 from os import system,path,getcwd
 from subprocess import check_output
 from re import search
 from tabulate import tabulate
-from main.handlers import color,funcSQL
+from main.handlers import color,funcSQL,SessionGoogle
+from bs4 import BeautifulSoup
 
 class Console(cmd.Cmd):
     def __init__(self,db_path):
@@ -122,13 +125,14 @@ class Console(cmd.Cmd):
             if not agent[0] in self.settings['agents'].keys():
                 self.settings['agents'][agent[0]] = {'creds':{}}
                 self.settings['agents'][agent[0]]['creds']['ID']   = agent[0]
-                self.settings['agents'][agent[0]]['creds']['User'] = agent[1]
-                self.settings['agents'][agent[0]]['creds']['Pass'] = agent[2]
-                self.settings['agents'][agent[0]]['creds']['Status'] = agent[3]
+                self.settings['agents'][agent[0]]['creds']['Platform'] = agent[1]
+                self.settings['agents'][agent[0]]['creds']['User'] = agent[2]
+                self.settings['agents'][agent[0]]['creds']['Pass'] = agent[3]
+                self.settings['agents'][agent[0]]['creds']['Status'] = agent[4]
 
-    def do_register(self,args):
-        """ add bot on database """
-        arg_parser = argparse.ArgumentParser(prog='register',description='add bot on database clients')
+    def do_test(self,args):
+        """ test login to email """
+        arg_parser = argparse.ArgumentParser(prog='test',description='add credentials if they are true')
         arg_parser.add_argument('--user', dest='user',metavar='<Username>', help='login username')
         arg_parser.add_argument('--pass', dest='password',metavar='<Password>', help='login password')
         arg_parser.add_argument('-f', '--file', dest='file',metavar='<filepath>', help='imports clients from a file')
@@ -136,17 +140,18 @@ class Console(cmd.Cmd):
             args=arg_parser.parse_args(shlex.split(args))
         except: return
         if args.user and args.password:
-        	num = self.login(args.user, args.password)
-
-
-		if num == 0:
-			color.display_messages('Login error! Connection error!', error=True)
-		elif num == 1:
-			color.display_messages('Login error! Check your login data!', error=True)
-		elif num == 2:
-			color.display_messages('Insert Data: SQL statement will insert a new row', info=True)
-			funcSQL.DB_insert(self.con, self.db, args.user, args.password)
-			color.display_messages('Bot credentials added with success', sucess=True)
+            if "@gmail" in args.user:
+                session = SessionGoogle.SessionGoogle(args.user, args.password)
+                r = session.get("http://plus.google.com")
+                finder = r.text.find("Iniciar sesión")
+                if finder != -1:
+                    color.display_messages('Login error! Check your login data!', error=True)
+                else:
+                    color.display_messages('Insert Data: SQL statement will insert a new row', info=True)
+                    funcSQL.DB_insert(self.con, self.db, args.user, args.password)
+                    color.display_messages('Account credentials added with success', sucess=True)
+            elif "@hotmail" in args.user:
+                num = self.login_hotmail(args.user, args.password)
 
         elif args.file:
             self.all_bot_checked = []
@@ -182,7 +187,7 @@ class Console(cmd.Cmd):
 						elif num == 2:
 							color.display_messages('Insert Data: SQL statement will insert a new row', info=True)
 							funcSQL.DB_insert(self.con, self.db, agent.split()[0],agent.split()[1])
-							color.display_messages('Bot ' + agent.split()[0] + '@' + agent.split()[1] + ' added with success\n', sucess=True)
+							color.display_messages('Account ' + agent.split()[0] + ' added with success\n', sucess=True)
             else:
                 color.display_messages('File could not be found', error=True)
         else:
@@ -243,7 +248,10 @@ class Console(cmd.Cmd):
 
     def do_clear(self,args):
         """ clears the window """
-        system('clear')
+        if platform.system() == 'Windows':
+            system('cls')
+        elif platform.system() == 'Linux':
+            system('clear')
 
     def default(self, args):pass
     def emptyline(self):pass
