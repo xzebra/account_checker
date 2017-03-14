@@ -4,7 +4,7 @@
 - [x] Gmail
 - [x] Microsoft
 - [ ] Yahoo
-- Etc
+- [ ] ...
 
 ### Description:
 It's a modification of the botinsta made for testing accounts from files (database dumps).
