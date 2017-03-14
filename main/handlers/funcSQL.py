@@ -10,8 +10,8 @@ class sqlite:
     deleteforID     = 'DELETE FROM db_accs WHERE id= {}'
     zeraids         = 'UPDATE SQLITE_SEQUENCE set seq=0 WHERE name="db_accs"'
     delete_all      = 'DROP TABLE IF EXISTS db_accs'
-def DB_insert(con,db,user,password,status):
-    db.execute('INSERT INTO db_accs (user,datestamp,password,status) VALUES(?,?,?,?)',(user,password,status))
+def DB_insert(con,db,platform,user,password,status):
+    db.execute('INSERT INTO db_accs (platform,user,password,status) VALUES(?,?,?,?)',(platform,user,password,status))
     con.commit()
 
 def lengthDB(db):
