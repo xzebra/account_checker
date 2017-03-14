@@ -152,7 +152,16 @@ class Console(cmd.Cmd):
                     color.display_messages('Login error! Account credentials added with success', error=True)
                 session.get("https://accounts.google.com/Logout")              
             elif "@hotmail" in args.user:
-                num = self.login_hotmail(args.user, args.password)
+                session = Sessions.SessionMicrosoft(args.user, args.password)
+                r = session.get("https://account.microsoft.com/")
+                finder = r.find(args.user)
+                if finder != -1:
+                    funcSQL.DB_insert(self.con, self.db, 'Microsoft', args.user, args.password, color.setcolor('On', color='Green'))
+                    color.display_messages('Account credentials added with success', sucess=True)
+                else:
+                    funcSQL.DB_insert(self.con, self.db, 'Microsoft', args.user, args.password, color.setcolor('Off', color='Red'))
+                    color.display_messages('Login error! Account credentials added with success', error=True)
+                session.get("https://outlook.live.com/owa/logoff.owa")     
 
         elif args.file:
             self.all_bot_checked = []
